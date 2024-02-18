@@ -50,7 +50,7 @@ public class Client {
             @Override
             public void run() {
                 String messageFromGroup;
-                while (socket.isConnected()) {
+                while (!socket.isClosed()) {
                     try {
                         //здесь работа будет приостановлена пока в буфере что-то не появится
                         messageFromGroup = reader.readLine();
@@ -77,6 +77,8 @@ public class Client {
             if (writer != null) {
                 writer.close();
             }
+            view.handleMessage("Вы были отключены от сервера.");
+            view.getConnectionComponent().setVisible(true);
         } catch (IOException e) {
             e.printStackTrace();
         }

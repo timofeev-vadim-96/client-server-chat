@@ -19,6 +19,7 @@ public class ClientUI extends JFrame {
     private Client client;
     private InetAddress ip;
     private int port;
+    private Component connectionComponent;
 
     /**
      * Конструктор пользовательского окна чата
@@ -32,7 +33,8 @@ public class ClientUI extends JFrame {
         setLocationRelativeTo(null);
         setTitle("Мессенджер");
 
-        add(createNorthComponent(), BorderLayout.NORTH);
+        connectionComponent = createNorthComponent();
+        add(connectionComponent, BorderLayout.NORTH);
         add(createSouthComponent(), BorderLayout.SOUTH);
         add(createCentralComponent());
 
@@ -72,9 +74,9 @@ public class ClientUI extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyChar() == '\n') {
                     String name = nameField.getText();
+                    component.setVisible(false);
                     createClient(name);
                     setTitle(String.format("Мессенджер (%s)", name));
-                    component.setVisible(false);
                 }
             }
         });
@@ -82,9 +84,9 @@ public class ClientUI extends JFrame {
         JButton loginButton = new JButton("Подключиться");
         loginButton.addActionListener(event -> {
             String name = nameField.getText();
+            component.setVisible(false);
             createClient(name);
             setTitle(String.format("Мессенджер (%s)", name));
-            component.setVisible(false);
         });
 
         component.add(nameField);
@@ -108,9 +110,8 @@ public class ClientUI extends JFrame {
             //отправляем свое имя - и это КОНТРАКТ, т.к. на этой логике работает Клиент-менеджер
             client.sendMessage(client.getName());
         } catch (IOException e) {
-            throw new RuntimeException
-                    (String.format("Ошибка во время попытки подключения к серверу " +
-                            "по адресу: %s, порт: %s. %s", ip, port, e));
+            JOptionPane.showMessageDialog(connectionComponent, "Подключение к серверу не удалось.");
+            connectionComponent.setVisible(true);
         }
     }
 
@@ -163,5 +164,8 @@ public class ClientUI extends JFrame {
      */
     public void handleMessage(String text) {
         chat.append(text + "\n");
+    }
+    public Component getConnectionComponent() {
+        return connectionComponent;
     }
 }
