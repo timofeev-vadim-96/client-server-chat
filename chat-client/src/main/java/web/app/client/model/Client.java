@@ -1,22 +1,26 @@
-package web.app.client;
+package web.app.client.model;
+
+import web.app.client.view.ClientUI;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class Client {
     private Socket socket;
     private BufferedReader reader;
     private BufferedWriter writer;
     private String name;
+    private ClientUI view;
 
-    public Client(Socket socket, String name) {
+    public Client(Socket socket, String name, ClientUI view) {
         this.socket = socket;
         this.name = name;
         try {
             //переход от массива байт в строковый буфер
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            //UI
+            this.view = view;
             //если соединение потеряно
         } catch (IOException e) {
             closeEverything(socket, reader, writer);
@@ -26,20 +30,9 @@ public class Client {
     /**
      * Метод отправки сообщений от клиента
      */
-    public void sendMessage() {
+    public void sendMessage(String message) {
         try {
-            //при первом подключении (отправке первого сообщения) на сервер,
-            //отправляем свое имя - и это КОНТРАКТ, т.к. на этой логике работает Клиент-менеджер
-            writer.write(name);
-            writer.newLine();
-            writer.flush(); //отправить имя клиента
-
-            //отправка самого сообщения
-            Scanner scanner = new Scanner(System.in);
-            while (socket.isConnected()) {
-                //здесь работа будет приостановлена пока в буфере что-то не появится
-                // (ожидание сообщения от пользователя)
-                String message = scanner.nextLine();
+            if (!socket.isClosed()) {
                 writer.write(message);
                 writer.newLine();
                 writer.flush();
@@ -61,7 +54,7 @@ public class Client {
                     try {
                         //здесь работа будет приостановлена пока в буфере что-то не появится
                         messageFromGroup = reader.readLine();
-                        System.out.println(messageFromGroup);
+                        view.handleMessage(messageFromGroup);
                     } catch (IOException e) {
                         closeEverything(socket, reader, writer);
                     }
@@ -87,5 +80,9 @@ public class Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String getName() {
+        return name;
     }
 }

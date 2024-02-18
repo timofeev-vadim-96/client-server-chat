@@ -27,7 +27,8 @@ public class ClientManager implements Runnable {
             //добавляем в список клиентов текущий экземпляр класса
             clients.add(this);
             System.out.println(name + " подключился к чату."); //чат СЕРВЕРА
-            broadcastMessage("Server: " + name + " подключился к чату."); //в чат КЛИЕНТОВ
+            sendMessage(this, "Вы подключились к чату."); //этому клиенту
+            broadcastMessage("Server: " + name + " подключился(-ась) к чату."); //в чат КЛИЕНТОВ
         } catch (IOException e) {
             closeEverything(socket, reader, writer);
         }
@@ -41,10 +42,14 @@ public class ClientManager implements Runnable {
             try {
                 //читаем пришедшую строку и пересылаем остальным
                 messageFromClient = reader.readLine();
+
                 if (isPersonalMessage(messageFromClient)){
+                    sendMessage(this, "Вы: " +
+                            getPersonalMessageBody(messageFromClient, parseRecipientName(messageFromClient))); //этому клиенту
                     sendPersonalMessage(messageFromClient);
                 }
                 else {
+                    sendMessage(this, "Вы: " + messageFromClient); //этому клиенту
                     broadcastMessage((String.format("%s: %s", this.name, messageFromClient)));
                 }
             } catch (IOException e) {
@@ -59,15 +64,15 @@ public class ClientManager implements Runnable {
     private void sendPersonalMessage(String messageFromClient) {
         String recipient = parseRecipientName(messageFromClient);
         boolean clientFound = false;
-        for (ClientManager client: clients){
-            if (client.name.equals(recipient) && !client.equals(this)){
+        for (ClientManager client : clients) {
+            if (client.name.equals(recipient) && !client.equals(this)) {
                 clientFound = true;
                 String messageBody = getPersonalMessageBody(messageFromClient, recipient);
                 sendMessage(client, String.format("%s: %s", this.name, messageBody));
                 break;
             }
         }
-        if (!clientFound){
+        if (!clientFound) {
             sendMessage(this, String.format("Пользователь с именем \"%s\" не найден.", recipient));
         }
     }
@@ -90,7 +95,7 @@ public class ClientManager implements Runnable {
      * Метод идентификации личных сообщений
      */
     private boolean isPersonalMessage(String message) {
-        return message.startsWith("@");
+        return message != null && message.startsWith("@");
     }
 
     /**
@@ -98,7 +103,7 @@ public class ClientManager implements Runnable {
      * @param message
      * @return
      */
-    private String parseRecipientName(String message){
+    private String parseRecipientName(String message) {
         StringBuilder recipientName = new StringBuilder();
         for (int i = 1; i < message.length(); i++) {
             //парсим первое слово, являющееся именем другого клиента
@@ -110,8 +115,9 @@ public class ClientManager implements Runnable {
 
     /**
      * Метод для парсинга тела личного сообщения (исключая имя получателя)
+     * @param clientName имя получателя
      */
-    private String getPersonalMessageBody(String message, String clientName){
+    private String getPersonalMessageBody(String message, String clientName) {
         return message.replaceFirst("@" + clientName, "").replaceFirst(" ", "");
     }
 
@@ -154,7 +160,7 @@ public class ClientManager implements Runnable {
      */
     private void removeClient() {
         clients.remove(this);
-        System.out.printf("%s вышел из чата.", name);
+        System.out.printf("%s вышел(-ла) из чата.\n", name);
         broadcastMessage("Server: " + name + " вышел из чата.");
     }
 }

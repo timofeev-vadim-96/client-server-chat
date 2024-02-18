@@ -28,7 +28,6 @@ public class Server {
                 thread.start();
             }
         } catch (IOException e){
-            //Закрываем соединение при проблемах со связью
             closeSocket();
         }
     }
